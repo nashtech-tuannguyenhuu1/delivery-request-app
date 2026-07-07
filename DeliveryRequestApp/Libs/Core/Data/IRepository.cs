@@ -1,5 +1,5 @@
-using System.Linq.Expressions;
 using Core.Domain;
+using System.Linq.Expressions;
 
 namespace Core.Data;
 

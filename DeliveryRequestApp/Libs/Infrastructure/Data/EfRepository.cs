@@ -1,7 +1,7 @@
-using System.Linq.Expressions;
 using Core.Data;
 using Core.Domain;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Infrastructure.Data;
 

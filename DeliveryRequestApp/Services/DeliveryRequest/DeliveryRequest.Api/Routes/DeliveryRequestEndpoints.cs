@@ -1,5 +1,4 @@
 ﻿using DeliveryRequest.Api.Routes.V1;
-using Mediator.Abstractions;
 
 namespace DeliveryRequest.Api.Routes;
 

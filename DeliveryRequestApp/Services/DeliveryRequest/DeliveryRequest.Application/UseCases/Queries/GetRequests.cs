@@ -2,11 +2,6 @@
 using Core.Domain;
 using DeliveryRequest.Application.Entities;
 using Mediator.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DeliveryRequest.Application.UseCases.Queries;
 public class GetRequests
