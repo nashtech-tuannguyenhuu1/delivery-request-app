@@ -30,3 +30,14 @@ public interface IUpdatableNullDateEntity
 {
     DateTimeOffset? UpdatedDate { get; set; }
 }
+
+
+public interface IDeletableNullDateEntity
+{
+    DateTimeOffset? DeletedDate { get; set; }
+}
+
+public interface IDeletableNullEntity
+{
+    Guid? DeletedById { get; set; }
+}

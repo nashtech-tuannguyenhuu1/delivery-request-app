@@ -2,8 +2,6 @@
 
 public class EntityChangedEvent
 {
-    public Guid Id { get; set; }
-
     public string TableName { get; set; } = default!;
 
     public string Action { get; set; } = default!;
@@ -22,10 +20,6 @@ public class EntityChangedEvent
 
     public class PropertyDataDto
     {
-        public Guid Id { get; set; }
-
-        public Guid AuditId { get; set; }
-
         public string PropertyName { get; set; } = default!;
 
         public string? OldValue { get; set; }

@@ -50,7 +50,6 @@ public class AuditTrailInterceptor : SaveChangesInterceptor
         {
             var audit = new EntityChangedEvent
             {
-                Id = Guid.NewGuid(),
                 TableName = entry.Entity.GetType().Name,
                 Action = entry.State.ToString(),
                 Timestamp = DateTime.UtcNow,
@@ -69,8 +68,6 @@ public class AuditTrailInterceptor : SaveChangesInterceptor
 
                 audit.Properties.Add(new EntityChangedEvent.PropertyDataDto
                 {
-                    Id = Guid.NewGuid(),
-                    AuditId = audit.Id,
                     PropertyName = prop.Metadata.Name,
                     OldValue = entry.State != EntityState.Added ? prop.OriginalValue?.ToString() : null,
                     NewValue = entry.State != EntityState.Deleted ? prop.CurrentValue?.ToString() : null
