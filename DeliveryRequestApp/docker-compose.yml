@@ -38,8 +38,39 @@ services:
     networks:
       - delivery-net
 
+  redis:
+    image: redis:7-alpine
+    container_name: delivery-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - delivery-net
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: delivery-redisinsight
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight-data:/data
+    networks:
+      - delivery-net
+
 volumes:
   sqlserver-data:
+  redis-data:
+  redisinsight-data:
 
 networks:
   delivery-net:

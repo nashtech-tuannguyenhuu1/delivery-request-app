@@ -6,6 +6,7 @@ using EventBus.ServiceBus.Configuration;
 using EventContracts.Audits.V1;
 using Infrastructure;
 using Infrastructure.Audits;
+using Infrastructure.Caching;
 using Infrastructure.Interceptors;
 using Mediator.Abstractions;
 using Mediator.Extensions;
@@ -25,6 +26,7 @@ public static class IServiceCollectionExtensions
         services.AddDatabaseContext(configuration);
         services.AddEventBus(configuration);
 
+        services.AddHybridCacheManager(configuration, instanceName: "delivery:");
         return services;
     }
 

@@ -8,10 +8,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Libs\Core\Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="UseCases\Commands\" />
+    <ProjectReference Include="..\..\..\Libs\AppContracts\AppContracts.csproj" />
+    <ProjectReference Include="..\..\..\Libs\Mediator\Mediator.csproj" />
   </ItemGroup>
 
 </Project>
