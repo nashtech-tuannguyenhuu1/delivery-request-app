@@ -1,5 +1,7 @@
+using System.Net.Http.Json;
 using System.Text.Json;
 using AppContracts.DeliveryRequests.V1;
+using AppContracts.DeliveryRequests.V1.Requests;
 using AppContracts.DeliveryRequests.V1.Responses;
 using DeliveryRequest.UI.Models.DeliveryRequests;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +13,14 @@ public class DeliveryRequestsController : Controller
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
+    };
+
+    private static readonly IReadOnlyDictionary<RequestStatus, RequestStatus[]> AllowedTransitions = new Dictionary<RequestStatus, RequestStatus[]>
+    {
+        [RequestStatus.New] = new[] { RequestStatus.Assigned },
+        [RequestStatus.Assigned] = new[] { RequestStatus.Delivered, RequestStatus.Returned },
+        [RequestStatus.Delivered] = Array.Empty<RequestStatus>(),
+        [RequestStatus.Returned] = Array.Empty<RequestStatus>(),
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
@@ -66,5 +76,269 @@ public class DeliveryRequestsController : Controller
         }
 
         return View(model);
+    }
+
+    public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)
+    {
+        var client = _httpClientFactory.CreateClient("DeliveryRequestApi");
+
+        try
+        {
+            using var response = await client.GetAsync($"v1/requests/{id}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return NotFound();
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<RequestResponseDto>>(JsonOptions, cancellationToken);
+            if (result is null || result.IsError || result.Data is null)
+            {
+                return NotFound();
+            }
+
+            return View(BuildDetailsViewModel(result.Data));
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to call the DeliveryRequest API.");
+            return Problem("Could not reach the DeliveryRequest API. Please try again later.");
+        }
+    }
+
+    public IActionResult Create()
+    {
+        return View(new DeliveryRequestFormViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(DeliveryRequestFormViewModel model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var client = _httpClientFactory.CreateClient("DeliveryRequestApi");
+        var dto = new CreateDeliveryRequestDto
+        {
+            Title = model.Title,
+            PickupAddress = model.PickupAddress,
+            DeliveryAddress = model.DeliveryAddress,
+        };
+
+        try
+        {
+            using var response = await client.PostAsJsonAsync("v1/requests", dto, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                model.ErrorMessage = $"The API request failed with status code {(int)response.StatusCode}.";
+                return View(model);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<Guid>>(JsonOptions, cancellationToken);
+            if (result is null || result.IsError)
+            {
+                model.ErrorMessage = result?.ErrorMessage ?? "Failed to create the delivery request.";
+                return View(model);
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to call the DeliveryRequest API.");
+            model.ErrorMessage = "Could not reach the DeliveryRequest API. Please try again later.";
+            return View(model);
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
+    {
+        var client = _httpClientFactory.CreateClient("DeliveryRequestApi");
+
+        try
+        {
+            using var response = await client.GetAsync($"v1/requests/{id}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return NotFound();
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<RequestResponseDto>>(JsonOptions, cancellationToken);
+            if (result is null || result.IsError || result.Data is null)
+            {
+                return NotFound();
+            }
+
+            var model = new DeliveryRequestFormViewModel
+            {
+                Id = result.Data.Id,
+                Title = result.Data.Title,
+                PickupAddress = result.Data.PickupAddress,
+                DeliveryAddress = result.Data.DeliveryAddress,
+            };
+
+            return View(model);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to call the DeliveryRequest API.");
+            return Problem("Could not reach the DeliveryRequest API. Please try again later.");
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(Guid id, DeliveryRequestFormViewModel model, CancellationToken cancellationToken)
+    {
+        model.Id = id;
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var client = _httpClientFactory.CreateClient("DeliveryRequestApi");
+        var dto = new UpdateDeliveryRequestDto
+        {
+            Title = model.Title,
+            PickupAddress = model.PickupAddress,
+            DeliveryAddress = model.DeliveryAddress,
+        };
+
+        try
+        {
+            using var response = await client.PutAsJsonAsync($"v1/requests/{id}", dto, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                model.ErrorMessage = $"The API request failed with status code {(int)response.StatusCode}.";
+                return View(model);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<bool>>(JsonOptions, cancellationToken);
+            if (result is null || result.IsError)
+            {
+                model.ErrorMessage = result?.ErrorMessage ?? "Failed to update the delivery request.";
+                return View(model);
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to call the DeliveryRequest API.");
+            model.ErrorMessage = "Could not reach the DeliveryRequest API. Please try again later.";
+            return View(model);
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var client = _httpClientFactory.CreateClient("DeliveryRequestApi");
+
+        try
+        {
+            using var response = await client.GetAsync($"v1/requests/{id}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return NotFound();
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<RequestResponseDto>>(JsonOptions, cancellationToken);
+            if (result is null || result.IsError || result.Data is null)
+            {
+                return NotFound();
+            }
+
+            return View(result.Data);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to call the DeliveryRequest API.");
+            return Problem("Could not reach the DeliveryRequest API. Please try again later.");
+        }
+    }
+
+    [HttpPost]
+    [ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(Guid id, CancellationToken cancellationToken)
+    {
+        var client = _httpClientFactory.CreateClient("DeliveryRequestApi");
+
+        try
+        {
+            using var response = await client.DeleteAsync($"v1/requests/{id}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = $"The API request failed with status code {(int)response.StatusCode}.";
+                return RedirectToAction(nameof(Delete), new { id });
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<bool>>(JsonOptions, cancellationToken);
+            if (result is null || result.IsError)
+            {
+                TempData["ErrorMessage"] = result?.ErrorMessage ?? "Failed to delete the delivery request.";
+                return RedirectToAction(nameof(Delete), new { id });
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to call the DeliveryRequest API.");
+            TempData["ErrorMessage"] = "Could not reach the DeliveryRequest API. Please try again later.";
+            return RedirectToAction(nameof(Delete), new { id });
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangeStatus(Guid id, RequestStatus status, string? reason, CancellationToken cancellationToken)
+    {
+        var client = _httpClientFactory.CreateClient("DeliveryRequestApi");
+        var dto = new UpdateRequestStatusDto
+        {
+            Status = status,
+            Reason = reason,
+        };
+
+        try
+        {
+            using var response = await client.PatchAsJsonAsync($"v1/requests/{id}/status", dto, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = $"The API request failed with status code {(int)response.StatusCode}.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<bool>>(JsonOptions, cancellationToken);
+            if (result is null || result.IsError)
+            {
+                TempData["ErrorMessage"] = result?.ErrorMessage ?? "Failed to change the status of the delivery request.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to call the DeliveryRequest API.");
+            TempData["ErrorMessage"] = "Could not reach the DeliveryRequest API. Please try again later.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    private static DeliveryRequestDetailsViewModel BuildDetailsViewModel(RequestResponseDto request)
+    {
+        var currentStatus = (RequestStatus)request.StatusId;
+        var allowedNextStatuses = AllowedTransitions.TryGetValue(currentStatus, out var next) ? next : Array.Empty<RequestStatus>();
+
+        return new DeliveryRequestDetailsViewModel
+        {
+            Request = request,
+            AllowedNextStatuses = allowedNextStatuses,
+        };
     }
 }

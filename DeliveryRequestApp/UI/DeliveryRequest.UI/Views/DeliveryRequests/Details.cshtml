@@ -1,0 +1,85 @@
+@model DeliveryRequest.UI.Models.DeliveryRequests.DeliveryRequestDetailsViewModel
+@using AppContracts.DeliveryRequests.V1
+@{
+    ViewData["Title"] = "Delivery Request Details";
+
+    string StatusBadgeClass(RequestStatus status) => status switch
+    {
+        RequestStatus.New => "bg-secondary",
+        RequestStatus.Assigned => "bg-primary",
+        RequestStatus.Delivered => "bg-success",
+        RequestStatus.Returned => "bg-warning text-dark",
+        _ => "bg-secondary",
+    };
+}
+
+<h2 class="mb-4">Delivery Request Details</h2>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage) || TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@(Model.ErrorMessage ?? TempData["ErrorMessage"])</div>
+}
+
+<dl class="row">
+    <dt class="col-sm-3">Title</dt>
+    <dd class="col-sm-9">@Model.Request.Title</dd>
+
+    <dt class="col-sm-3">Pickup Address</dt>
+    <dd class="col-sm-9">@Model.Request.PickupAddress</dd>
+
+    <dt class="col-sm-3">Delivery Address</dt>
+    <dd class="col-sm-9">@Model.Request.DeliveryAddress</dd>
+
+    <dt class="col-sm-3">Status</dt>
+    <dd class="col-sm-9"><span class="badge @StatusBadgeClass((RequestStatus)Model.Request.StatusId)">@((RequestStatus)Model.Request.StatusId)</span></dd>
+
+    @if (Model.Request.DeliveredDate.HasValue)
+    {
+        <dt class="col-sm-3">Delivered Date</dt>
+        <dd class="col-sm-9">@Model.Request.DeliveredDate.Value.ToLocalTime().ToString("g")</dd>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Request.ReturnedReason))
+    {
+        <dt class="col-sm-3">Returned Reason</dt>
+        <dd class="col-sm-9">@Model.Request.ReturnedReason</dd>
+    }
+
+    <dt class="col-sm-3">Created Date</dt>
+    <dd class="col-sm-9">@Model.Request.CreatedDate.ToLocalTime().ToString("g")</dd>
+
+    @if (Model.Request.UpdatedDate.HasValue)
+    {
+        <dt class="col-sm-3">Updated Date</dt>
+        <dd class="col-sm-9">@Model.Request.UpdatedDate.Value.ToLocalTime().ToString("g")</dd>
+    }
+</dl>
+
+<div class="mb-4">
+    <a asp-action="Edit" asp-route-id="@Model.Request.Id" class="btn btn-outline-primary">Edit</a>
+    <a asp-action="Delete" asp-route-id="@Model.Request.Id" class="btn btn-outline-danger">Delete</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+@if (Model.AllowedNextStatuses.Count > 0)
+{
+    <h4>Change Status</h4>
+    <form asp-controller="DeliveryRequests" asp-action="ChangeStatus" asp-route-id="@Model.Request.Id" method="post" class="row g-2 align-items-end">
+        <div class="col-auto">
+            <label for="status" class="form-label">New Status</label>
+            <select id="status" name="status" class="form-select">
+                @foreach (var next in Model.AllowedNextStatuses)
+                {
+                    <option value="@next">@next</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <label for="reason" class="form-label">Reason (required if Returned)</label>
+            <input id="reason" name="reason" class="form-control" placeholder="Reason" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Update Status</button>
+        </div>
+    </form>
+}
