@@ -1,4 +1,6 @@
 using System.Text.Json;
+using AppContracts.DeliveryRequests.V1;
+using AppContracts.DeliveryRequests.V1.Responses;
 using DeliveryRequest.UI.Models.DeliveryRequests;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,7 +22,7 @@ public class DeliveryRequestsController : Controller
         _logger = logger;
     }
 
-    public async Task<IActionResult> Index(DeliveryStatus? status, int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(RequestStatus? status, int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
     {
         if (page < 1) page = 1;
         if (pageSize is < 1 or > 100) pageSize = 20;
@@ -44,7 +46,7 @@ public class DeliveryRequestsController : Controller
                 return View(model);
             }
 
-            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<PagedResultDto<RequestDto>>>(JsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<PagedResultDto<RequestResponseDto>>>(JsonOptions, cancellationToken);
             if (result is null || result.IsError || result.Data is null)
             {
                 model.ErrorMessage = result?.ErrorMessage ?? "No data returned from the API.";

@@ -1,3 +1,4 @@
+using AppContracts.DeliveryRequests.V1;
 using AppContracts.DeliveryRequests.V1.Requests;
 using DeliveryRequest.Application.UseCases.Commands;
 using DeliveryRequest.Application.UseCases.Queries;
@@ -11,9 +12,9 @@ public static class RequestEndpointsV1
     {
         var group = app.MapGroup("/v1/requests");
 
-        group.MapGet("/", async (ISender sender) =>
+        group.MapGet("/", async (ISender sender, RequestStatus? status, int page = 1, int pageSize = 20) =>
         {
-            return await sender.SendAsync(new GetRequests.Query());
+            return await sender.SendAsync(new GetRequests.Query(status, page, pageSize));
         });
 
         group.MapGet("/{id}", async (Guid id, ISender sender) =>

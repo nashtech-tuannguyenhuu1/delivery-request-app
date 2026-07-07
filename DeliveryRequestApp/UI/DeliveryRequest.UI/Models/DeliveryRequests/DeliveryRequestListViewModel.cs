@@ -1,10 +1,13 @@
+using AppContracts.DeliveryRequests.V1;
+using AppContracts.DeliveryRequests.V1.Responses;
+
 namespace DeliveryRequest.UI.Models.DeliveryRequests;
 
 public class DeliveryRequestListViewModel
 {
-    public IReadOnlyList<RequestDto> Items { get; set; } = Array.Empty<RequestDto>();
+    public IReadOnlyList<RequestResponseDto> Items { get; set; } = Array.Empty<RequestResponseDto>();
 
-    public DeliveryStatus? SelectedStatus { get; set; }
+    public RequestStatus? SelectedStatus { get; set; }
 
     public int PageNumber { get; set; } = 1;
 
