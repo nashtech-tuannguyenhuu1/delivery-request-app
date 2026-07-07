@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
 
 namespace Infrastructure;
 
@@ -18,10 +17,10 @@ public class CurrentUserMiddleware : IMiddleware
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var value = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (Guid.TryParse(value, out var id))
+        if (context.Request.Headers.TryGetValue("X-UserId", out var UserIdString)
+            && Guid.TryParse(UserIdString, out var value))
         {
-            _currentUser.UserId = id;
+            _currentUser.UserId = value;
         }
 
         await next(context);
