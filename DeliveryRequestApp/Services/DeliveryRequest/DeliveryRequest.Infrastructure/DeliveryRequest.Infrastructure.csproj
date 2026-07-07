@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Libs\Core\Core.csproj" />
+    <ProjectReference Include="..\..\..\Libs\EventBus\EventBus.csproj" />
     <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\DeliveryRequest.Application\DeliveryRequest.Application.csproj" />
   </ItemGroup>

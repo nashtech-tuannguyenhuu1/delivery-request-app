@@ -1,7 +1,7 @@
 using DeliveryRequest.Application.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace DeliveryRequest.Infrastructure;
+namespace DeliveryRequest.Infrastructure.Data;
 
 public class DeliveryRequestDbContext : DbContext
 {
