@@ -96,7 +96,24 @@ public class DeliveryRequestsController : Controller
                 return NotFound();
             }
 
-            return View(BuildDetailsViewModel(result.Data));
+            var model = BuildDetailsViewModel(result.Data);
+
+            using var documentsResponse = await client.GetAsync($"v1/requests/{id}/documents", cancellationToken);
+            if (documentsResponse.IsSuccessStatusCode)
+            {
+                var documentsResult = await documentsResponse.Content.ReadFromJsonAsync<ApiResultDto<List<DocumentResponseDto>>>(JsonOptions, cancellationToken);
+                if (documentsResult is { IsError: false, Data: not null })
+                {
+                    model.Documents = documentsResult.Data;
+                }
+            }
+
+            if (TempData["ErrorMessage"] is string tempError)
+            {
+                model.ErrorMessage = tempError;
+            }
+
+            return View(model);
         }
         catch (HttpRequestException ex)
         {
@@ -340,5 +357,76 @@ public class DeliveryRequestsController : Controller
             Request = request,
             AllowedNextStatuses = allowedNextStatuses,
         };
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadDocument(Guid id, IFormFile file, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            TempData["ErrorMessage"] = "Please choose a file to upload.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var client = _httpClientFactory.CreateClient("DeliveryRequestApi");
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            using var fileStream = file.OpenReadStream();
+            using var streamContent = new StreamContent(fileStream);
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+            content.Add(streamContent, "file", file.FileName);
+
+            using var response = await client.PostAsync($"v1/requests/{id}/documents", content, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = $"The API request failed with status code {(int)response.StatusCode}.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<Guid>>(JsonOptions, cancellationToken);
+            if (result is null || result.IsError)
+            {
+                TempData["ErrorMessage"] = result?.ErrorMessage ?? "Failed to upload the document.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to call the DeliveryRequest API.");
+            TempData["ErrorMessage"] = "Could not reach the DeliveryRequest API. Please try again later.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    public async Task<IActionResult> DownloadDocument(Guid documentId, CancellationToken cancellationToken)
+    {
+        var client = _httpClientFactory.CreateClient("DeliveryRequestApi");
+
+        try
+        {
+            var response = await client.GetAsync($"v1/documents/{documentId}/download", HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return NotFound();
+            }
+
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                ?? response.Content.Headers.ContentDisposition?.FileName
+                ?? "download";
+
+            var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            return File(stream, contentType, fileName.Trim('"'));
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to call the DeliveryRequest API.");
+            return Problem("Could not reach the DeliveryRequest API. Please try again later.");
+        }
     }
 }

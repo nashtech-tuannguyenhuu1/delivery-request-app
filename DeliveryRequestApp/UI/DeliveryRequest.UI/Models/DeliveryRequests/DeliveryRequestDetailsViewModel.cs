@@ -9,6 +9,8 @@ public class DeliveryRequestDetailsViewModel
 
     public IReadOnlyList<RequestStatus> AllowedNextStatuses { get; set; } = Array.Empty<RequestStatus>();
 
+    public IReadOnlyList<DocumentResponseDto> Documents { get; set; } = Array.Empty<DocumentResponseDto>();
+
     public string? ErrorMessage { get; set; }
 
     public string? StatusMessage { get; set; }

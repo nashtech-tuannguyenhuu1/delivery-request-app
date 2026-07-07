@@ -7,5 +7,6 @@ public static class DeliveryRequestEndpoints
     public static void MapDeliveryRequestEndpoints(this WebApplication app)
     {
         app.MapRequestsEndpointsV1();
+        app.MapDocumentsEndpointsV1();
     }
 }
