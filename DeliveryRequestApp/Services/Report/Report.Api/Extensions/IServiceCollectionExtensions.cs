@@ -1,22 +1,16 @@
-﻿using DeliveryRequest.Api.Consumers;
-using DeliveryRequest.Application;
-using DeliveryRequest.Infrastructure.Behaviors;
-using DeliveryRequest.Infrastructure.Data;
-using EventBus.ServiceBus;
+﻿using EventBus.ServiceBus;
 using EventBus.ServiceBus.Configuration;
-using EventContracts.Audits.V1;
 using EventContracts.DeliveryRequests.V1;
 using Infrastructure;
-using Infrastructure.Audits;
 using Infrastructure.Caching;
-using Infrastructure.Interceptors;
 using Infrastructure.Outbox;
-using Infrastructure.Storage;
-using Mediator.Abstractions;
 using Mediator.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Report.Api.Consumers;
+using Report.Application;
+using Report.Infrastructure.Data;
 
-namespace DeliveryRequest.Api.Extensions;
+namespace Report.Api.Extensions;
 
 public static class IServiceCollectionExtensions
 {
@@ -29,35 +23,24 @@ public static class IServiceCollectionExtensions
         services.AddCurrentUser();
         services.AddDatabaseContext(configuration);
         services.AddEventBus(configuration);
-        services.AddAzureBlobStorage(configuration);
 
-        services.AddHybridCacheManager(configuration, instanceName: "delivery:");
+        services.AddHybridCacheManager(configuration, instanceName: "report:");
         return services;
     }
 
     private static IServiceCollection AddAppMediator(this IServiceCollection services)
     {
         services.AddMediator(typeof(Anchor).Assembly);
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
-
         return services;
     }
 
     private static IServiceCollection AddDatabaseContext(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddAuditInterceptor();
-        services.AddAuditTrailInterceptor();
-        services.AddDbContext<DeliveryRequestDbContext>((sp, options) =>
+        services.AddDbContext<ReportDbContext>((sp, options) =>
             options
-                .UseSqlServer(configuration.GetConnectionString("Default"))
-                .AddInterceptors(
-                    sp.GetRequiredService<AuditSaveChangesInterceptor>(),
-                    sp.GetRequiredService<AuditTrailInterceptor>()
-                ));
+                .UseSqlServer(configuration.GetConnectionString("Default")));
 
-        services.AddEfUnitOfWork<DeliveryRequestDbContext>();
-
-        services.AddScoped<IAuditEventStore, InMemoryAuditEventStore>();
+        services.AddEfUnitOfWork<ReportDbContext>();
 
         return services;
     }
@@ -70,8 +53,6 @@ public static class IServiceCollectionExtensions
             ?? throw new InvalidOperationException("Missing 'ServiceBusConfiguration' section.");
 
         services.AddServiceBusEventBus(serviceBusConfiguration)
-            .MapQueueMessage<EntityChangedEvent>(serviceBusConfiguration.Queues["Audit"])
-            .MapTopicMessage<DeliveryRequestChangedEvent>(serviceBusConfiguration.Topics["DeliveryRequestChangedTopic"])
             .AddTopicHandler<DeliveryRequestChangedEvent, DeliveryRequestChangedEventHandler>(serviceBusConfiguration.Topics["DeliveryRequestChangedTopic"]);
 
         services.AddInMemoryOutbox();

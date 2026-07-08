@@ -1,7 +1,7 @@
 ﻿using Core.Domain;
-using Core.Outbox;
 using DeliveryRequest.Infrastructure.Data;
 using EventBus;
+using EventBus.Outbox;
 using Infrastructure.Audits;
 using Mediator.Abstractions;
 using Microsoft.EntityFrameworkCore;

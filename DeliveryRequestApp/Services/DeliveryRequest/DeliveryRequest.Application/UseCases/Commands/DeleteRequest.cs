@@ -1,8 +1,8 @@
 using Core.Data;
 using Core.Domain;
-using Core.Outbox;
 using DeliveryRequest.Application.Entities;
-using EventContracts.Audits.V1;
+using EventBus.Outbox;
+using EventContracts.DeliveryRequests.V1;
 using Mediator.Abstractions;
 
 namespace DeliveryRequest.Application.UseCases.Commands;

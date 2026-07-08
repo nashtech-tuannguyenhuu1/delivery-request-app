@@ -20,7 +20,6 @@
     <ProjectReference Include="..\DeliveryRequest.Application\DeliveryRequest.Application.csproj" />
     <ProjectReference Include="..\DeliveryRequest.Infrastructure\DeliveryRequest.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\Libs\EventBus.ServiceBus\EventBus.ServiceBus.csproj" />
-    <ProjectReference Include="..\..\..\Libs\EventContracts\EventContracts.csproj" />
   </ItemGroup>
 
 </Project>
