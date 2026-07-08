@@ -37,7 +37,7 @@ public class GetRequestById
                         UpdatedById = x.UpdatedById,
                         UpdatedDate = x.UpdatedDate,
                         CreatedById = x.CreatedById,
-                });
+                    });
             });
 
             return new ResultModel<RequestResponseDto>(result);

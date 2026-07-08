@@ -1,4 +1,5 @@
 ﻿using Core.Domain;
+using Core.Outbox;
 using DeliveryRequest.Infrastructure.Data;
 using EventBus;
 using Infrastructure.Audits;
@@ -18,11 +19,19 @@ public class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 
     private readonly IAuditEventStore _auditEventStore;
 
-    public TransactionBehavior(DeliveryRequestDbContext dbContext, IEventBus eventBus, IAuditEventStore auditEventStore)
+    private readonly IOutboxStore _outboxStore;
+
+    public TransactionBehavior(
+        DeliveryRequestDbContext dbContext,
+        IEventBus eventBus,
+        IAuditEventStore auditEventStore,
+        IOutboxStore outboxStore
+    )
     {
         _dbContext = dbContext;
         _eventBus = eventBus;
         _auditEventStore = auditEventStore;
+        _outboxStore = outboxStore;
     }
 
     public async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
@@ -45,23 +54,34 @@ public class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 
             var response = await next();
 
-            await PublishAuditEventsAsync();
-
             await transaction.CommitAsync(cancellationToken);
+
+            await PublishAuditEventsAsync(cancellationToken);
+            await PublishOutboxEventsAsync(cancellationToken);
 
             return response;
         });
     }
 
-    private async Task PublishAuditEventsAsync()
+    private async Task PublishAuditEventsAsync(CancellationToken cancellationToken)
     {
         var events = (_auditEventStore.GetAll()).ToList();
 
         foreach (var e in events)
         {
-            await _eventBus.PublishAsync(e);
+            await _eventBus.PublishAsync(e, cancellationToken: cancellationToken);
         }
 
         _auditEventStore.Clear();
+    }
+
+    private async Task PublishOutboxEventsAsync(CancellationToken cancellationToken)
+    {
+        foreach (var publish in _outboxStore.Pending)
+        {
+            await publish(_eventBus, cancellationToken);
+        }
+
+        _outboxStore.Clear();
     }
 }

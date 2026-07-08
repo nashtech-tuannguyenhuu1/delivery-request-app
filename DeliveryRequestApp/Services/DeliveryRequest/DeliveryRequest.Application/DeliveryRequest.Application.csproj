@@ -9,6 +9,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Libs\Core\Core.csproj" />
     <ProjectReference Include="..\..\..\Libs\AppContracts\AppContracts.csproj" />
+    <ProjectReference Include="..\..\..\Libs\EventBus\EventBus.csproj" />
+    <ProjectReference Include="..\..\..\Libs\EventContracts\EventContracts.csproj" />
     <ProjectReference Include="..\..\..\Libs\Mediator\Mediator.csproj" />
   </ItemGroup>
 

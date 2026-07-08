@@ -2,7 +2,6 @@ using Core.Storage;
 using DeliveryRequest.Application.UseCases.Commands;
 using DeliveryRequest.Application.UseCases.Queries;
 using Mediator.Abstractions;
-using Microsoft.AspNetCore.Http;
 
 namespace DeliveryRequest.Api.Routes.V1;
 

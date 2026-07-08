@@ -1,10 +1,9 @@
-using System.Net.Http.Json;
-using System.Text.Json;
 using AppContracts.DeliveryRequests.V1;
 using AppContracts.DeliveryRequests.V1.Requests;
 using AppContracts.DeliveryRequests.V1.Responses;
 using DeliveryRequest.UI.Models.DeliveryRequests;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace DeliveryRequest.UI.Controllers;
 

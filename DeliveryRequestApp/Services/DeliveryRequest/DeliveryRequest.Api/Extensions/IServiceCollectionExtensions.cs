@@ -1,4 +1,5 @@
-﻿using DeliveryRequest.Application;
+﻿using DeliveryRequest.Api.Consumers;
+using DeliveryRequest.Application;
 using DeliveryRequest.Infrastructure.Behaviors;
 using DeliveryRequest.Infrastructure.Data;
 using EventBus.ServiceBus;
@@ -8,6 +9,7 @@ using Infrastructure;
 using Infrastructure.Audits;
 using Infrastructure.Caching;
 using Infrastructure.Interceptors;
+using Infrastructure.Outbox;
 using Infrastructure.Storage;
 using Mediator.Abstractions;
 using Mediator.Extensions;
@@ -67,7 +69,11 @@ public static class IServiceCollectionExtensions
             ?? throw new InvalidOperationException("Missing 'ServiceBusConfiguration' section.");
 
         services.AddServiceBusEventBus(serviceBusConfiguration)
-            .MapQueueMessage<EntityChangedEvent>(serviceBusConfiguration.Queues["Audit"]);
+            .MapQueueMessage<EntityChangedEvent>(serviceBusConfiguration.Queues["Audit"])
+            .MapTopicMessage<DeliveryRequestChangedEvent>(serviceBusConfiguration.Topics["DeliveryRequestChangedTopic"])
+            .AddTopicHandler<DeliveryRequestChangedEvent, DeliveryRequestChangedEventHandler>(serviceBusConfiguration.Topics["DeliveryRequestChangedTopic"]);
+
+        services.AddInMemoryOutbox();
 
         return services;
     }

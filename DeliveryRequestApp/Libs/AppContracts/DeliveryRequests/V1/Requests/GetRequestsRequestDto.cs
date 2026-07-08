@@ -1,6 +1,4 @@
-﻿using AppContracts.DeliveryRequests.V1;
-
-namespace AppContracts.DeliveryRequests.V1.Requests;
+﻿namespace AppContracts.DeliveryRequests.V1.Requests;
 
 public class GetRequestsRequestDto
 {

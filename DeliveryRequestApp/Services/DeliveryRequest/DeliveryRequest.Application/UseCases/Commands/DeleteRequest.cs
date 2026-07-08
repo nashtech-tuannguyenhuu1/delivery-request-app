@@ -1,7 +1,8 @@
-using Core.Caching;
 using Core.Data;
 using Core.Domain;
+using Core.Outbox;
 using DeliveryRequest.Application.Entities;
+using EventContracts.Audits.V1;
 using Mediator.Abstractions;
 
 namespace DeliveryRequest.Application.UseCases.Commands;
@@ -10,7 +11,7 @@ public class DeleteRequest
 {
     public record Command(Guid Id) : ICommand<bool>;
 
-    internal class Handler(IUnitOfWork unitOfWork, ICurrentUser currentUser, ICacheManager cacheManager) : IRequestHandler<Command, ResultModel<bool>>
+    internal class Handler(IUnitOfWork unitOfWork, ICurrentUser currentUser, IOutboxStore outbox) : IRequestHandler<Command, ResultModel<bool>>
     {
         public async Task<ResultModel<bool>> HandleAsync(Command request, CancellationToken cancellationToken)
         {
@@ -30,7 +31,11 @@ public class DeleteRequest
 
             unitOfWork.Repository<Request>().Update(entity);
 
-            await cacheManager.RemoveAsync(CacheKeys.CacheKeys.GetRequestKey(entity.Id));
+            outbox.Enqueue(new DeliveryRequestChangedEvent
+            {
+                Id = entity.Id,
+                Status = entity.StatusId,
+            });
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
