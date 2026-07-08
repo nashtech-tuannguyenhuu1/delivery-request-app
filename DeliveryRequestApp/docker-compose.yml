@@ -67,10 +67,22 @@ services:
     networks:
       - delivery-net
 
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: delivery-azurite
+    command: "azurite-blob --blobHost 0.0.0.0 --blobPort 10000"
+    ports:
+      - "10000:10000"
+    volumes:
+      - azurite-data:/data
+    networks:
+      - delivery-net
+
 volumes:
   sqlserver-data:
   redis-data:
   redisinsight-data:
+  azurite-data:
 
 networks:
   delivery-net:

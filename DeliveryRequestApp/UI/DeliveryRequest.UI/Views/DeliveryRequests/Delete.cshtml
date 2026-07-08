@@ -1,0 +1,33 @@
+@model AppContracts.DeliveryRequests.V1.Responses.RequestResponseDto
+@using AppContracts.DeliveryRequests.V1
+@{
+    ViewData["Title"] = "Delete Delivery Request";
+}
+
+<h2 class="mb-4">Delete Delivery Request</h2>
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<div class="alert alert-warning">Are you sure you want to delete this delivery request?</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Title</dt>
+    <dd class="col-sm-9">@Model.Title</dd>
+
+    <dt class="col-sm-3">Pickup Address</dt>
+    <dd class="col-sm-9">@Model.PickupAddress</dd>
+
+    <dt class="col-sm-3">Delivery Address</dt>
+    <dd class="col-sm-9">@Model.DeliveryAddress</dd>
+
+    <dt class="col-sm-3">Status</dt>
+    <dd class="col-sm-9">@((RequestStatus)Model.StatusId)</dd>
+</dl>
+
+<form asp-controller="DeliveryRequests" asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+</form>

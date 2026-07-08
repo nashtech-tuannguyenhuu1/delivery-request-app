@@ -8,6 +8,7 @@ using Infrastructure;
 using Infrastructure.Audits;
 using Infrastructure.Caching;
 using Infrastructure.Interceptors;
+using Infrastructure.Storage;
 using Mediator.Abstractions;
 using Mediator.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ public static class IServiceCollectionExtensions
         services.AddCurrentUser();
         services.AddDatabaseContext(configuration);
         services.AddEventBus(configuration);
+        services.AddAzureBlobStorage(configuration);
 
         services.AddHybridCacheManager(configuration, instanceName: "delivery:");
         return services;

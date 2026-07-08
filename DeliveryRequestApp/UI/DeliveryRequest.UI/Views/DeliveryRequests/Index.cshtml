@@ -1,0 +1,102 @@
+@model DeliveryRequest.UI.Models.DeliveryRequests.DeliveryRequestListViewModel
+@using AppContracts.DeliveryRequests.V1
+@{
+    ViewData["Title"] = "Delivery Requests";
+
+    string StatusBadgeClass(int statusId) => (RequestStatus)statusId switch
+    {
+        RequestStatus.New => "bg-secondary",
+        RequestStatus.Assigned => "bg-primary",
+        RequestStatus.Delivered => "bg-success",
+        RequestStatus.Returned => "bg-warning text-dark",
+        _ => "bg-secondary",
+    };
+}
+
+<h2 class="mb-4">Delivery Requests</h2>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<div class="mb-3">
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</div>
+
+<form asp-controller="DeliveryRequests" asp-action="Index" method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label for="status" class="form-label">Status</label>
+        <select id="status" name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">All</option>
+            @foreach (var option in Enum.GetValues<RequestStatus>())
+            {
+                <option value="@option" selected="@(Model.SelectedStatus == option)">@option</option>
+            }
+        </select>
+    </div>
+    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Filter</button>
+    </div>
+</form>
+
+<table class="table table-striped table-bordered align-middle">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Pickup Address</th>
+            <th>Delivery Address</th>
+            <th>Status</th>
+            <th>Created Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr>
+                <td colspan="6" class="text-center text-muted">No delivery requests found.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.PickupAddress</td>
+                    <td>@item.DeliveryAddress</td>
+                    <td><span class="badge @StatusBadgeClass(item.StatusId)">@((RequestStatus)item.StatusId)</span></td>
+                    <td>@item.CreatedDate.ToLocalTime().ToString("g")</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Details</a>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Delivery requests pagination">
+        <ul class="pagination">
+            <li class="page-item @(Model.HasPrevious ? "" : "disabled")">
+                <a class="page-link" asp-action="Index" asp-route-status="@Model.SelectedStatus" asp-route-page="@(Model.PageNumber - 1)" asp-route-pageSize="@Model.PageSize">Previous</a>
+            </li>
+            @for (var i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-status="@Model.SelectedStatus" asp-route-page="@i" asp-route-pageSize="@Model.PageSize">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.HasNext ? "" : "disabled")">
+                <a class="page-link" asp-action="Index" asp-route-status="@Model.SelectedStatus" asp-route-page="@(Model.PageNumber + 1)" asp-route-pageSize="@Model.PageSize">Next</a>
+            </li>
+        </ul>
+    </nav>
+    <p class="text-muted">Total: @Model.TotalCount item(s)</p>
+}
