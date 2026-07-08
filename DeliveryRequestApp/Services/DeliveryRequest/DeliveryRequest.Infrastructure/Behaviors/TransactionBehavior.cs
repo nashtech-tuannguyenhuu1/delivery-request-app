@@ -1,0 +1,87 @@
+﻿using Core.Domain;
+using Core.Outbox;
+using DeliveryRequest.Infrastructure.Data;
+using EventBus;
+using Infrastructure.Audits;
+using Mediator.Abstractions;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
+
+namespace DeliveryRequest.Infrastructure.Behaviors;
+
+public class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : class, IRequest<TResponse>
+    where TResponse : class
+{
+    private readonly DeliveryRequestDbContext _dbContext;
+
+    private readonly IEventBus _eventBus;
+
+    private readonly IAuditEventStore _auditEventStore;
+
+    private readonly IOutboxStore _outboxStore;
+
+    public TransactionBehavior(
+        DeliveryRequestDbContext dbContext,
+        IEventBus eventBus,
+        IAuditEventStore auditEventStore,
+        IOutboxStore outboxStore
+    )
+    {
+        _dbContext = dbContext;
+        _eventBus = eventBus;
+        _auditEventStore = auditEventStore;
+        _outboxStore = outboxStore;
+    }
+
+    public async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        if (request is not ITransactionRequest)
+        {
+            return await next();
+        }
+
+        if (_dbContext.Database.CurrentTransaction != null)
+        {
+            return await next();
+        }
+
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            // Achieving atomicity
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+            var response = await next();
+
+            await transaction.CommitAsync(cancellationToken);
+
+            await PublishAuditEventsAsync(cancellationToken);
+            await PublishOutboxEventsAsync(cancellationToken);
+
+            return response;
+        });
+    }
+
+    private async Task PublishAuditEventsAsync(CancellationToken cancellationToken)
+    {
+        var events = (_auditEventStore.GetAll()).ToList();
+
+        foreach (var e in events)
+        {
+            await _eventBus.PublishAsync(e, cancellationToken: cancellationToken);
+        }
+
+        _auditEventStore.Clear();
+    }
+
+    private async Task PublishOutboxEventsAsync(CancellationToken cancellationToken)
+    {
+        foreach (var publish in _outboxStore.Pending)
+        {
+            await publish(_eventBus, cancellationToken);
+        }
+
+        _outboxStore.Clear();
+    }
+}

@@ -1,0 +1,89 @@
+name: delivery-request
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: delivery-sqlserver
+    environment:
+      ACCEPT_EULA: "${ACCEPT_EULA}"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - delivery-net
+
+  servicebus:
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    container_name: delivery-servicebus
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ACCEPT_EULA: "${ACCEPT_EULA}"
+      SQL_SERVER: sqlserver
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+    ports:
+      - "5672:5672"
+      - "5300:5300"
+    volumes:
+      - "./docker/servicebus/Config.json:/ServiceBus_Emulator/ConfigFiles/Config.json:ro"
+    networks:
+      - delivery-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: delivery-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - delivery-net
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: delivery-redisinsight
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight-data:/data
+    networks:
+      - delivery-net
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: delivery-azurite
+    command: "azurite-blob --blobHost 0.0.0.0 --blobPort 10000"
+    ports:
+      - "10000:10000"
+    volumes:
+      - azurite-data:/data
+    networks:
+      - delivery-net
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  redisinsight-data:
+  azurite-data:
+
+networks:
+  delivery-net:
+    driver: bridge
