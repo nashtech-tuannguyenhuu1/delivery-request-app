@@ -1,0 +1,61 @@
+@model DeliveryRequest.UI.Models.Audits.AuditHistoryViewModel
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger mb-0">@Model.ErrorMessage</div>
+}
+else if (Model.Records.Count == 0)
+{
+    <p class="text-muted mb-0">No audit records found for this request.</p>
+}
+else
+{
+    <table class="table table-striped table-bordered align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>User</th>
+                <th>Changes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in Model.Records)
+            {
+                <tr>
+                    <td class="text-nowrap">@record.Timestamp.ToLocalTime().ToString("g")</td>
+                    <td>
+                        <span class="badge @(record.Action switch
+                        {
+                            "Added" => "bg-success",
+                            "Modified" => "bg-primary",
+                            "Deleted" => "bg-danger",
+                            _ => "bg-secondary",
+                        })">@record.Action</span>
+                    </td>
+                    <td>@(string.IsNullOrEmpty(record.UserId) ? "-" : record.UserId)</td>
+                    <td>
+                        @if (record.Properties.Count == 0)
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                        else
+                        {
+                            <ul class="list-unstyled mb-0">
+                                @foreach (var property in record.Properties)
+                                {
+                                    <li>
+                                        <strong>@property.PropertyName</strong>:
+                                        <span class="text-muted">@(property.OldValue ?? "(none)")</span>
+                                        &rarr;
+                                        <span>@(property.NewValue ?? "(none)")</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

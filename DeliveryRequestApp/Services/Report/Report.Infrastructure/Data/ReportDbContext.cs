@@ -11,6 +11,8 @@ public class ReportDbContext : DbContext
     }
     public virtual DbSet<DailyTracking> DailyTrackings { get; set; }
 
+    public virtual DbSet<RequestStatusTracking> RequestStatusTrackings { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

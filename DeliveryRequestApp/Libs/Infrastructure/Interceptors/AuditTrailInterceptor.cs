@@ -63,14 +63,24 @@ public class AuditTrailInterceptor : SaveChangesInterceptor
                 if (_ignoredProperties.Contains(prop.Metadata.Name))
                     continue;
 
-                if (entry.State == EntityState.Added || entry.State == EntityState.Modified && !prop.IsModified)
+                // Only capture changed fields for Modified entities. For Added/Deleted
+                // capture all properties (Added -> NewValue, Deleted -> OldValue).
+                if (entry.State == EntityState.Modified && !prop.IsModified)
+                    continue;
+
+                // As an extra guard, skip properties where values are equal (avoids
+                // noisy entries when IsModified is not reliable for some providers).
+                var oldVal = entry.State != EntityState.Added ? prop.OriginalValue?.ToString() : null;
+                var newVal = entry.State != EntityState.Deleted ? prop.CurrentValue?.ToString() : null;
+
+                if (entry.State == EntityState.Modified && string.Equals(oldVal, newVal, StringComparison.Ordinal))
                     continue;
 
                 audit.Properties.Add(new EntityChangedEvent.PropertyDataDto
                 {
                     PropertyName = prop.Metadata.Name,
-                    OldValue = entry.State != EntityState.Added ? prop.OriginalValue?.ToString() : null,
-                    NewValue = entry.State != EntityState.Deleted ? prop.CurrentValue?.ToString() : null
+                    OldValue = oldVal,
+                    NewValue = newVal
                 });
             }
 

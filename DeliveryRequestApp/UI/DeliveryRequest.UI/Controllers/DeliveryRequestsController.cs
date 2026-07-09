@@ -1,7 +1,9 @@
 using AppContracts.DeliveryRequests.V1;
 using AppContracts.DeliveryRequests.V1.Requests;
 using AppContracts.DeliveryRequests.V1.Responses;
+using DeliveryRequest.UI.Models.Audits;
 using DeliveryRequest.UI.Models.DeliveryRequests;
+using DeliveryRequest.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -23,12 +25,31 @@ public class DeliveryRequestsController : Controller
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IAuditApiClient _auditApiClient;
     private readonly ILogger<DeliveryRequestsController> _logger;
 
-    public DeliveryRequestsController(IHttpClientFactory httpClientFactory, ILogger<DeliveryRequestsController> logger)
+    public DeliveryRequestsController(IHttpClientFactory httpClientFactory, IAuditApiClient auditApiClient, ILogger<DeliveryRequestsController> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _auditApiClient = auditApiClient;
         _logger = logger;
+    }
+
+    public async Task<IActionResult> Audit(Guid id, CancellationToken cancellationToken)
+    {
+        var model = new AuditHistoryViewModel();
+
+        var result = await _auditApiClient.GetAuditsAsync(id.ToString(), tableName: "Request", cancellationToken: cancellationToken);
+        if (result.IsError || result.Data is null)
+        {
+            model.ErrorMessage = result.ErrorMessage ?? "No data returned from the API.";
+        }
+        else
+        {
+            model.Records = result.Data;
+        }
+
+        return PartialView("_AuditHistory", model);
     }
 
     public async Task<IActionResult> Index(RequestStatus? status, int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)

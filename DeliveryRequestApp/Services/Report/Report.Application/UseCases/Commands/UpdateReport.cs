@@ -5,6 +5,7 @@ using Report.Application.Entities;
 using Report.Application.Enums;
 
 namespace Report.Application.UseCases.Commands;
+
 public class UpdateReport
 {
     public record Command(Guid RequestId, int Status) : ICommand<bool>;
@@ -18,6 +19,21 @@ public class UpdateReport
             var tracking = await unitOfWork.Repository<DailyTracking>()
                 .FirstOrDefaultAsync(x => x.Date == dateNow, tracking: true);
 
+            var currentRequest = await unitOfWork.Repository<RequestStatusTracking>()
+                .FirstOrDefaultAsync(x => x.RequestId == request.RequestId, tracking: true);
+            var isNew = false;
+            if (currentRequest == null)
+            {
+                isNew = true;
+                currentRequest = new RequestStatusTracking
+                {
+                    Id = Guid.NewGuid(),
+                    RequestId = request.RequestId,
+                    Status = request.Status,
+                };
+                await unitOfWork.Repository<RequestStatusTracking>().AddAsync(currentRequest);
+            }
+
             if (tracking == null)
             {
                 tracking = new DailyTracking
@@ -27,6 +43,16 @@ public class UpdateReport
                 };
 
                 await unitOfWork.Repository<DailyTracking>().AddAsync(tracking);
+            }
+
+            if (currentRequest.Status == request.Status)
+            {
+                if (isNew)
+                {
+                    tracking.NewCount++;
+                }
+                await unitOfWork.SaveChangesAsync();
+                return ResultModel<bool>.Create(true);
             }
 
             if (request.Status == (int)DeliveryStatus.New)
