@@ -1,14 +1,14 @@
-﻿using DeliveryRequest.Application.UseCases.Queries;
-using EventBus;
+﻿using EventBus;
 using EventContracts.DeliveryRequests.V1;
 using Mediator.Abstractions;
+using Report.Application.UseCases.Commands;
 
-namespace DeliveryRequest.Api.Consumers;
+namespace Report.Api.Consumers;
 
 public class DeliveryRequestChangedEventHandler(ISender sender) : IMessageHandler<DeliveryRequestChangedEvent>
 {
     public async Task HandleAsync(MessageEnvelope<DeliveryRequestChangedEvent> envelope, CancellationToken cancellationToken)
     {
-        await sender.SendAsync(new InvalidateRequestCache.Query(envelope.Content.Id));
+        await sender.SendAsync(new UpdateReport.Command(envelope.Content.Id, envelope.Content.Status));
     }
 }

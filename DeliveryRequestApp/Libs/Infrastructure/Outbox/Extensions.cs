@@ -1,4 +1,4 @@
-﻿using Core.Outbox;
+﻿using EventBus.Outbox;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure.Outbox;

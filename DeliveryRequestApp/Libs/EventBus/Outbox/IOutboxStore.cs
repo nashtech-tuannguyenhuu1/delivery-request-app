@@ -1,6 +1,4 @@
-﻿using EventBus;
-
-namespace Core.Outbox;
+﻿namespace EventBus.Outbox;
 
 public delegate Task OutboxPublish(IEventBus eventBus, CancellationToken cancellationToken);
 

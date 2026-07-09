@@ -1,4 +1,4 @@
-﻿namespace EventContracts.Audits.V1;
+﻿namespace EventContracts.DeliveryRequests.V1;
 
 public class DeliveryRequestChangedEvent
 {
