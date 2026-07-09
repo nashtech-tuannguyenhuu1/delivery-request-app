@@ -1,6 +1,6 @@
-namespace Report.Application.Responses;
+namespace AppContracts.Reports.V1.Responses;
 
-public record ReportTotalDto
+public record ReportTotalResponseDto
 {
     public DateOnly From { get; init; }
 

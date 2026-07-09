@@ -1,4 +1,4 @@
-using DeliveryRequest.UI.Models.Audits;
+using AppContracts.Audits.V1.Responses;
 using DeliveryRequest.UI.Models.DeliveryRequests;
 using System.Text.Json;
 
@@ -21,7 +21,7 @@ public class AuditApiClient : IAuditApiClient
         _logger = logger;
     }
 
-    public async Task<ApiResultDto<List<AuditRecordDto>>> GetAuditsAsync(string primaryKey, string? tableName = null, CancellationToken cancellationToken = default)
+    public async Task<ApiResultDto<List<AuditRecordResponseDto>>> GetAuditsAsync(string primaryKey, string? tableName = null, CancellationToken cancellationToken = default)
     {
         var query = $"v1/audits?primaryKey={Uri.EscapeDataString(primaryKey)}";
         if (!string.IsNullOrEmpty(tableName))
@@ -37,7 +37,7 @@ public class AuditApiClient : IAuditApiClient
                 return Error($"The API request failed with status code {(int)response.StatusCode}.");
             }
 
-            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<List<AuditRecordDto>>>(JsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<List<AuditRecordResponseDto>>>(JsonOptions, cancellationToken);
             if (result is null || result.IsError || result.Data is null)
             {
                 return Error(result?.ErrorMessage ?? "No data returned from the API.");
@@ -52,7 +52,7 @@ public class AuditApiClient : IAuditApiClient
         }
     }
 
-    private static ApiResultDto<List<AuditRecordDto>> Error(string message) => new()
+    private static ApiResultDto<List<AuditRecordResponseDto>> Error(string message) => new()
     {
         IsError = true,
         ErrorMessage = message,

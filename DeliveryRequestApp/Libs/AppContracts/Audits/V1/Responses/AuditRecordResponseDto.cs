@@ -1,7 +1,6 @@
-namespace DeliveryRequest.UI.Models.Audits;
+namespace AppContracts.Audits.V1.Responses;
 
-/// <summary>Mirrors Audit.Application.Responses.AuditRecordDto returned by the Audit API.</summary>
-public record AuditRecordDto
+public record AuditRecordResponseDto
 {
     public int Id { get; init; }
 
@@ -15,10 +14,10 @@ public record AuditRecordDto
 
     public string? PrimaryKey { get; init; }
 
-    public List<AuditPropertyDto> Properties { get; init; } = [];
+    public List<AuditPropertyResponseDto> Properties { get; init; } = [];
 }
 
-public record AuditPropertyDto
+public record AuditPropertyResponseDto
 {
     public string PropertyName { get; init; } = default!;
 

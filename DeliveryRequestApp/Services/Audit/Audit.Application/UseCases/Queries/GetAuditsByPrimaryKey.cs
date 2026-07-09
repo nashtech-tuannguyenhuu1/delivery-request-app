@@ -1,4 +1,4 @@
-using Audit.Application.Responses;
+using AppContracts.Audits.V1.Responses;
 using Core.Data;
 using Core.Domain;
 using Mediator.Abstractions;
@@ -8,19 +8,19 @@ namespace Audit.Application.UseCases.Queries;
 
 public class GetAuditsByPrimaryKey
 {
-    public record Query(string PrimaryKey, string? TableName) : IQuery<List<AuditRecordDto>>;
+    public record Query(string PrimaryKey, string? TableName) : IQuery<List<AuditRecordResponseDto>>;
 
-    internal class Handler(IUnitOfWork unitOfWork) : IRequestHandler<Query, ResultModel<List<AuditRecordDto>>>
+    internal class Handler(IUnitOfWork unitOfWork) : IRequestHandler<Query, ResultModel<List<AuditRecordResponseDto>>>
     {
-        public async Task<ResultModel<List<AuditRecordDto>>> HandleAsync(Query request, CancellationToken cancellationToken)
+        public async Task<ResultModel<List<AuditRecordResponseDto>>> HandleAsync(Query request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.PrimaryKey))
             {
-                return ResultModel<List<AuditRecordDto>>.Create(null, isError: true, errorMessage: "'PrimaryKey' is required.");
+                return ResultModel<List<AuditRecordResponseDto>>.Create(null, isError: true, errorMessage: "'PrimaryKey' is required.");
             }
 
             var records = await unitOfWork.Repository<AuditEntity>().FindAsync(
-                selector: x => new AuditRecordDto
+                selector: x => new AuditRecordResponseDto
                 {
                     Id = x.Id,
                     TableName = x.TableName,
@@ -28,7 +28,7 @@ public class GetAuditsByPrimaryKey
                     Timestamp = x.Timestamp,
                     UserId = x.UserId,
                     PrimaryKey = x.PrimaryKey,
-                    Properties = x.AuditProperties.Select(p => new AuditPropertyDto
+                    Properties = x.AuditProperties.Select(p => new AuditPropertyResponseDto
                     {
                         PropertyName = p.PropertyName,
                         OldValue = p.OldValue,
@@ -40,7 +40,7 @@ public class GetAuditsByPrimaryKey
                 orderBy: q => q.OrderByDescending(x => x.Timestamp),
                 ct: cancellationToken);
 
-            return ResultModel<List<AuditRecordDto>>.Create(records);
+            return ResultModel<List<AuditRecordResponseDto>>.Create(records);
         }
     }
 }
