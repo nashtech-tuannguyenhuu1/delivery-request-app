@@ -1,5 +1,5 @@
+﻿using AppContracts.Reports.V1.Responses;
 using DeliveryRequest.UI.Models.DeliveryRequests;
-using DeliveryRequest.UI.Models.Reports;
 using System.Text.Json;
 
 namespace DeliveryRequest.UI.Services;
@@ -21,7 +21,7 @@ public class ReportApiClient : IReportApiClient
         _logger = logger;
     }
 
-    public async Task<ApiResultDto<ReportTotalDto>> GetReportByDateRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    public async Task<ApiResultDto<ReportTotalResponseDto>> GetReportByDateRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
     {
         var query = $"v1/reports?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}";
 
@@ -33,7 +33,7 @@ public class ReportApiClient : IReportApiClient
                 return Error($"The API request failed with status code {(int)response.StatusCode}.");
             }
 
-            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<ReportTotalDto>>(JsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResultDto<ReportTotalResponseDto>>(JsonOptions, cancellationToken);
             if (result is null || result.IsError || result.Data is null)
             {
                 return Error(result?.ErrorMessage ?? "No data returned from the API.");
@@ -48,7 +48,7 @@ public class ReportApiClient : IReportApiClient
         }
     }
 
-    private static ApiResultDto<ReportTotalDto> Error(string message) => new()
+    private static ApiResultDto<ReportTotalResponseDto> Error(string message) => new()
     {
         IsError = true,
         ErrorMessage = message,
