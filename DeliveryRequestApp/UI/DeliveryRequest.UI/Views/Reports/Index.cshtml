@@ -1,0 +1,70 @@
+@model DeliveryRequest.UI.Models.Reports.ReportViewModel
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<h2 class="mb-4">Number of requests in the system</h2>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form asp-controller="Reports" asp-action="Index" method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-auto">
+        <label for="from" class="form-label">From</label>
+        <input type="date" id="from" name="from" class="form-control" value="@Model.From.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <label for="to" class="form-label">To</label>
+        <input type="date" id="to" name="to" class="form-control" value="@Model.To.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">View Report</button>
+    </div>
+</form>
+
+@if (Model.Report is not null)
+{
+    var report = Model.Report;
+    var total = report.NewCount + report.AssignedCount + report.DeliveredCount + report.ReturnedCount;
+
+    <p class="text-muted">
+        Delivery request totals from <strong>@report.From.ToString("yyyy-MM-dd")</strong> to <strong>@report.To.ToString("yyyy-MM-dd")</strong>
+    </p>
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">New</h6>
+                    <span class="fs-2 fw-bold"><span class="badge bg-secondary">@report.NewCount</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Assigned</h6>
+                    <span class="fs-2 fw-bold"><span class="badge bg-primary">@report.AssignedCount</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Delivered</h6>
+                    <span class="fs-2 fw-bold"><span class="badge bg-success">@report.DeliveredCount</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Returned</h6>
+                    <span class="fs-2 fw-bold"><span class="badge bg-warning text-dark">@report.ReturnedCount</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+}

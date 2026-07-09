@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Infrastructure.Caching;
+
 public class HybridCacheManager : ICacheManager
 {
     private const int DefaultExpirationMinutes = 10;

@@ -6,6 +6,7 @@ using DeliveryRequest.Application.Entities;
 using Mediator.Abstractions;
 
 namespace DeliveryRequest.Application.UseCases.Queries;
+
 public class GetRequestById
 {
     public record Query(Guid Id) : IQuery<RequestResponseDto>;
